@@ -126,7 +126,8 @@ svg.spark{width:100%;height:60px;display:block}
 </div></header>
 
 <main class="wrap">
-<div id="aiNotice" class="notice hidden" style="margin-bottom:16px">AI coaching is unavailable in this view. Open this page in the Claude app while signed in and allow Claude when asked. Lessons and your saved stories still work.</div>
+<div id="aiNotice" class="notice hidden" style="margin-bottom:16px">AI coaching is unavailable in this view. Open this page in Claude while signed in to your own Claude account and allow Claude when asked. Lessons and your saved stories still work.</div>
+<p class="status" style="margin:0 0 16px">AI coaching runs on your own Claude account. The first time you press a coach button, Claude asks you to allow it.</p>
 
 <!-- TRAINING -->
 <section id="view-train" class="stack">
@@ -343,7 +344,9 @@ const store = {
     try{
       const [db, user] = await Promise.all([claude.use('db'), claude.use('user')]);
       const uid = user ? await user.id() : null;
-      if (db && uid){ this.db = db; this.uid = uid; }
+      let canWrite = null;
+      try{ canWrite = user && user.can ? await user.can('data.write') : null; }catch(e){}
+      if (db && uid && canWrite !== false){ this.db = db; this.uid = uid; }
     }catch(e){}
     if (!this.db) this.local = true;
     await this.load();
@@ -365,18 +368,20 @@ const store = {
   async saveStory(s){
     const i = this.stories.findIndex(x => x.id === s.id); if (i >= 0) this.stories[i] = s; else this.stories.push(s);
     if (this.local) return this.persistLocal();
-    await this.storyCol().doc(s.id).set(s);
+    try{ await this.storyCol().doc(s.id).set(s); }
+    catch(e){ if (e && e.code === 'quota_exceeded') throw e; this.goLocal(); }
   },
+  goLocal(){ this.local = true; this.db = null; this.persistLocal(); },
   async deleteStory(id){
     this.stories = this.stories.filter(x => x.id !== id);
     if (this.local) return this.persistLocal();
-    await this.storyCol().doc(id).delete();
+    try{ await this.storyCol().doc(id).delete(); }catch(e){ this.goLocal(); }
   },
   async learn(codes, type, score){
     for (const c of (codes || [])) if (PATTERNS[c]) this.profile.patterns[c] = (this.profile.patterns[c] || 0) + 1;
     if (typeof score === 'number') { this.profile.sessions.push({t:Date.now(), type, score}); this.profile.sessions = this.profile.sessions.slice(-40); }
     if (this.local) return this.persistLocal();
-    try{ await this.profRef().set(this.profile); }catch(e){}
+    try{ await this.profRef().set(this.profile); }catch(e){ this.goLocal(); }
   }
 };
 function coachMemory(){

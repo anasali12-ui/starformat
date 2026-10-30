@@ -12,9 +12,29 @@ An interactive coach for behavioral interviews, built for airport operations rol
 
 **My Stories.** Your saved story bank, the habits the coach has learned from your sessions, and your score trend.
 
-## How to run it
+## Use it with your own Claude account
 
-`index.html` is built to run as a Claude artifact. The AI coaching and the private story bank use Claude's artifact runtime (`sample`, `db` and `user` capabilities), so those features work only when the page is opened inside Claude. Opened as a plain file in a browser, the lessons display and stories save to that browser, but the coach buttons stay disabled.
+The AI coaching always runs on the Claude account of the person using the app, never on the account of whoever shared or published it. You need your own Claude account (any plan) and your own usage limits apply.
+
+### Option 1: Make your own copy (recommended)
+
+1. Download `index.html` from this repo (open the file, then click the download button).
+2. Open Claude (claude.ai or the Claude app) and start a new chat.
+3. Attach `index.html` and send this message:
+
+   > Publish this file as an artifact exactly as it is, with the capabilities sample, db and user.
+
+4. Open the artifact Claude creates. Press any coach button and allow Claude when asked.
+
+Your copy belongs to you. Your stories are saved privately to your own Claude account and follow you across devices.
+
+### Option 2: Open a shared link
+
+If someone shares their published link with you, you can open it while signed in to your own Claude account. The coaching still runs on your account, not theirs. If your stories cannot be saved to that copy, they are kept in your browser instead, so making your own copy (Option 1) is better for long term use.
+
+### Opening the file directly
+
+Opened as a plain file in a web browser, the lessons display and stories save to that browser, but the coach buttons stay disabled, because the AI features need Claude.
 
 ## STAR at a glance
 
