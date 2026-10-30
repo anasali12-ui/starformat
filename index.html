@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+</head>
+<body>
+<title>STAR Story Coach</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: a flight-strip style workspace. Sticky tab rail, one column of stacked strips, each strip a working step. */
+:root{
+  --bg:#F3F5F8; --surface:#FFFFFF; --sunk:#E8ECF2; --ink:#14202C; --muted:#5A6878; --line:#D3DAE3;
+  --accent:#2350C8; --accent-ink:#FFFFFF; --accent-soft:#E3EAFB;
+  --amber:#B86A00; --amber-soft:#FCF0DC; --good:#1E7A4C; --good-soft:#DFF2E7; --bad:#B3261E; --bad-soft:#FBE3E1;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F151C; --surface:#18212B; --sunk:#111A22; --ink:#E7EDF3; --muted:#97A5B4; --line:#2A3644;
+  --accent:#7D9DF5; --accent-ink:#0B1220; --accent-soft:#1E2A47;
+  --amber:#F0B254; --amber-soft:#3A2B12; --good:#6BCF97; --good-soft:#163526; --bad:#F2867E; --bad-soft:#3F1A18; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F151C; --surface:#18212B; --sunk:#111A22; --ink:#E7EDF3; --muted:#97A5B4; --line:#2A3644;
+  --accent:#7D9DF5; --accent-ink:#0B1220; --accent-soft:#1E2A47;
+  --amber:#F0B254; --amber-soft:#3A2B12; --good:#6BCF97; --good-soft:#163526; --bad:#F2867E; --bad-soft:#3F1A18; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:860px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 60px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+header.top .in{max-width:860px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 0}
+.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.brand h1{font-family:var(--f-display);font-weight:700;font-size:1.35rem;margin:0;letter-spacing:-.01em}
+.brand .code{font-family:var(--f-mono);font-size:.72rem;color:var(--muted);letter-spacing:.08em}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;margin-top:8px;scrollbar-width:none}
+nav.tabs button{font:600 .92rem var(--f-body);background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:10px 12px;cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+nav.tabs button:focus-visible,button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h2{font-family:var(--f-display);font-weight:700;font-size:1.45rem;line-height:1.2;margin:0 0 6px;text-wrap:balance}
+h3{font-family:var(--f-display);font-weight:500;font-size:1.1rem;margin:0 0 8px;text-wrap:balance}
+p{margin:0}
+.lede{color:var(--muted);max-width:62ch}
+.stack{display:flex;flex-direction:column;gap:16px}
+.strip{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.eyebrow{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+label.f{display:flex;flex-direction:column;gap:4px;font-weight:600;font-size:.9rem;min-width:0}
+label.f small{font-weight:400;color:var(--muted)}
+textarea,input,select{font:inherit;font-size:1rem;color:var(--ink);background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
+textarea{resize:vertical;min-height:110px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.btn{font:600 .95rem var(--f-body);border-radius:8px;padding:10px 16px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:none}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.status{font-size:.9rem;color:var(--muted)}
+.notice{background:var(--amber-soft);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:.92rem}
+.chip{display:inline-block;font-size:.78rem;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.chip.amber{background:var(--amber-soft);color:var(--amber)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+/* Time budget bar */
+.budget{display:flex;height:34px;border-radius:6px;overflow:hidden;font-family:var(--f-mono);font-size:.72rem;font-weight:500}
+.budget span{display:flex;align-items:center;justify-content:center;color:var(--accent-ink);white-space:nowrap;overflow:hidden}
+.b-s{background:#6F86B8}.b-t{background:#5571B3}.b-a{background:var(--accent)}.b-r{background:var(--good)}.b-l{background:var(--amber)}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.legend div{border-left:3px solid var(--line);padding-left:10px;font-size:.9rem}
+.legend b{display:block;font-family:var(--f-display);font-weight:500;font-size:1rem}
+.legend .ls{border-color:#6F86B8}.legend .lt{border-color:#5571B3}.legend .la{border-color:var(--accent)}.legend .lr{border-color:var(--good)}.legend .ll{border-color:var(--amber)}
+ul.tight{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+/* STAR result */
+.part{display:grid;grid-template-columns:118px 1fr;gap:10px;align-items:start;padding-top:10px;border-top:1px solid var(--line)}
+.part:first-child{border-top:0;padding-top:0}
+.part .lab{font-family:var(--f-display);font-weight:500}
+.part .lab .sc{display:block;font-family:var(--f-mono);font-size:.75rem;color:var(--muted);margin-top:2px}
+.part textarea{min-height:70px}
+@media (max-width:520px){.part{grid-template-columns:1fr}}
+.dots{display:inline-flex;gap:3px;vertical-align:middle}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--line);display:inline-block}
+.dots i.on{background:var(--accent)}
+.score{font-family:var(--f-display);font-weight:700;font-size:2.4rem;line-height:1;font-variant-numeric:tabular-nums}
+.scorebox{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.tip{font-size:.92rem;padding:8px 10px;border-radius:8px;background:var(--sunk)}
+.tip b{text-transform:capitalize}
+.metric{display:grid;grid-template-columns:1fr;gap:4px;padding:10px;border:1px dashed var(--amber);border-radius:8px}
+.metric .ph{font-family:var(--f-mono);font-size:.8rem;color:var(--amber)}
+/* Chat */
+.chat{display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow-y:auto;padding:4px}
+.msg{max-width:88%;padding:10px 13px;border-radius:12px;white-space:pre-wrap;min-width:0;overflow-wrap:anywhere}
+.msg.ai{background:var(--sunk);align-self:flex-start;border-top-left-radius:3px}
+.msg.me{background:var(--accent);color:var(--accent-ink);align-self:flex-end;border-top-right-radius:3px}
+.who{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.wc{font-family:var(--f-mono);font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.wc.ok{color:var(--good)}.wc.long{color:var(--amber)}
+/* Bank */
+.story{display:flex;flex-direction:column;gap:8px;padding:14px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.story .hd{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.story .hd h3{margin:0}
+.pill{font-family:var(--f-mono);font-size:.75rem;padding:3px 8px;border-radius:6px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.pill.hi{background:var(--good-soft);color:var(--good)}.pill.mid{background:var(--amber-soft);color:var(--amber)}.pill.lo{background:var(--bad-soft);color:var(--bad)}
+.empty{border:1px dashed var(--line);border-radius:var(--r);padding:22px;text-align:left;color:var(--muted)}
+.pattern{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:.95rem}
+.pattern:first-child{border-top:0}
+.qmap{display:flex;flex-direction:column;gap:4px;padding:10px 0;border-top:1px solid var(--line)}
+.qmap:first-child{border-top:0}
+.qmap .q{font-weight:600}
+.qmap .m{font-size:.9rem;color:var(--muted)}
+svg.spark{width:100%;height:60px;display:block}
+.hidden{display:none}
+@media (prefers-reduced-motion:no-preference){.strip{transition:border-color .2s}}
+</style>
+
+<header class="top"><div class="in">
+  <div class="brand"><h1>STAR Story Coach</h1><span class="code">SITUATION · TASK · ACTION · RESULT · LESSONS</span></div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tab-train" aria-selected="true" data-view="train">Training</button>
+    <button role="tab" id="tab-prep" aria-selected="false" data-view="prep">Interview Prep</button>
+    <button role="tab" id="tab-mock" aria-selected="false" data-view="mock">Mock Interview</button>
+    <button role="tab" id="tab-bank" aria-selected="false" data-view="bank">My Stories</button>
+  </nav>
+</div></header>
+
+<main class="wrap">
+<div id="aiNotice" class="notice hidden" style="margin-bottom:16px">AI coaching is unavailable in this view. Open this page in the Claude app while signed in and allow Claude when asked. Lessons and your saved stories still work.</div>
+
+<!-- TRAINING -->
+<section id="view-train" class="stack">
+  <div class="strip">
+    <span class="eyebrow">Lesson 1</span>
+    <h2>How a STAR answer is built</h2>
+    <p class="lede">Behavioral questions start with "Tell me about a time when..." The interviewer is using your past behavior to predict how you will perform. STAR keeps your story focused, and adding Lessons shows you grow from experience. Aim for 1 to 2 minutes spoken, about 200 to 300 words.</p>
+    <div class="budget" aria-label="Share of talking time">
+      <span class="b-s" style="width:12%">S</span><span class="b-t" style="width:8%">T</span><span class="b-a" style="width:60%">ACTION 60%</span><span class="b-r" style="width:12%">R</span><span class="b-l" style="width:8%">L</span>
+    </div>
+    <div class="legend">
+      <div class="ls"><b>Situation</b>Set the scene in one or two sentences. Where, when, what was at stake.</div>
+      <div class="lt"><b>Task</b>Your responsibility. What you personally owned.</div>
+      <div class="la"><b>Action</b>The longest part. Your steps, decisions and why. Say "I", not "we".</div>
+      <div class="lr"><b>Result</b>The outcome with numbers: D0 points, minutes saved, overtime hours, dollars.</div>
+      <div class="ll"><b>Lessons</b>What you learned and what you do differently now.</div>
+    </div>
+  </div>
+
+  <div class="strip">
+    <span class="eyebrow">Lesson 2</span>
+    <h3>Five habits that separate strong answers</h3>
+    <ul class="tight">
+      <li><b>Own it.</b> "We fixed the staffing gap" hides you. "I rebuilt the early shift bid" shows you.</li>
+      <li><b>Quantify the result.</b> "Things improved" becomes "D0 recovered from 78% to 86% in two weeks."</li>
+      <li><b>Keep the setup short.</b> Long background eats the time the interviewer needs for your actions.</li>
+      <li><b>Show your thinking.</b> Explain why you chose each step, not just what you did.</li>
+      <li><b>Close with a lesson.</b> Especially on failure questions, the lesson is what they remember.</li>
+    </ul>
+    <p class="status">Build 8 to 10 stories covering leadership, conflict, failure, initiative, teamwork, pressure and adaptability. One strong story can answer several questions.</p>
+  </div>
+
+  <div class="strip" id="builder">
+    <span class="eyebrow">Practice</span>
+    <h2>Tell your story. The coach builds the STAR.</h2>
+    <p class="lede">Type it the way you would tell a friend, messy is fine. The coach will structure it, score each part, add a lessons section, and point out where numbers would make it stronger. It will never invent numbers for you.</p>
+    <label class="f" for="trainQ">Question this story answers <small>optional</small>
+      <select id="trainQ">
+        <option value="">Let the coach decide</option>
+        <option>Tell me about a time you handled an operational disruption.</option>
+        <option>Tell me about a time you were short staffed and had to keep the operation running.</option>
+        <option>Tell me about a time you improved a process using data.</option>
+        <option>Tell me about a time you had a conflict with a coworker or another department.</option>
+        <option>Tell me about a time you made a mistake.</option>
+        <option>Tell me about a time you led a team through change.</option>
+        <option>Tell me about a time you had to make a decision with incomplete information.</option>
+        <option>Tell me about a time you delivered difficult feedback.</option>
+      </select>
+    </label>
+    <label class="f" for="trainRaw">Your story
+      <textarea id="trainRaw" rows="8" placeholder="Example: Last winter we had a snowstorm and a bunch of the early morning ramp agents called out. I was the coordinator on shift. I pulled the call out list, moved people from later shifts, called in two part timers, and worked with the ramp lead on which flights to prioritize. We still had some delays but most of the early bank went out close to on time..."></textarea>
+    </label>
+    <div class="row">
+      <button class="btn primary ai" id="buildBtn">Build my STAR</button>
+      <button class="btn ghost" id="exampleBtn">Load an example story</button>
+      <span class="status" id="buildStatus"></span>
+    </div>
+  </div>
+
+  <div id="result" class="stack hidden">
+    <div class="strip">
+      <div class="scorebox">
+        <div><span class="eyebrow">Story score</span><div class="score" id="rScore">0</div></div>
+        <div style="flex:1;min-width:200px">
+          <label class="f" for="rTitle">Story title<input id="rTitle"></label>
+          <div class="chips" id="rComps" style="margin-top:8px"></div>
+        </div>
+      </div>
+      <div id="rParts"></div>
+      <div class="row">
+        <button class="btn primary" id="saveBtn">Save to My Stories</button>
+        <button class="btn ai" id="rescoreBtn">Rescore my edits</button>
+        <span class="status" id="saveStatus"></span>
+      </div>
+    </div>
+
+    <div class="strip">
+      <span class="eyebrow">Coaching notes</span>
+      <div class="stack" id="rTips" style="gap:8px"></div>
+    </div>
+
+    <div class="strip" id="metricsStrip">
+      <span class="eyebrow">Make it data driven</span>
+      <h3>Fill in what you know. Leave blank what you don't.</h3>
+      <p class="status">These are the spots where a real number would make your result land. Use your actual figures, or a reasonable estimate you could defend if asked.</p>
+      <div class="stack" id="rMetrics" style="gap:10px"></div>
+      <div class="row"><button class="btn primary ai" id="numbersBtn">Rewrite with my numbers</button><span class="status" id="numStatus"></span></div>
+    </div>
+
+    <div class="strip">
+      <span class="eyebrow">Recall prompts</span>
+      <p class="status">Answer these in your head or add them to your story. They usually surface the best details.</p>
+      <ul class="tight" id="rFollow"></ul>
+      <span class="eyebrow" style="margin-top:6px">This story can also answer</span>
+      <ul class="tight" id="rAlso"></ul>
+    </div>
+  </div>
+</section>
+
+<!-- PREP -->
+<section id="view-prep" class="stack hidden">
+  <div class="strip">
+    <span class="eyebrow">Before the interview</span>
+    <h2>Map your stories to the questions they will ask</h2>
+    <p class="lede">Tell the coach the role. It looks at your saved stories and what it has learned about your habits, then predicts the likely questions, picks your best story for each, and shows the gaps to fill before interview day.</p>
+    <div class="grid2">
+      <label class="f" for="prepRole">Role<input id="prepRole" value="Senior Coordinator, Airport Operations Station Support"></label>
+      <label class="f" for="prepLevel">Level<select id="prepLevel"><option>Frontline / coordinator</option><option selected>Supervisor / senior coordinator</option><option>Manager</option><option>Director</option></select></label>
+    </div>
+    <label class="f" for="prepJD">Job description or notes <small>optional, paste key duties</small><textarea id="prepJD" rows="4" placeholder="Paste the posting's responsibilities and qualifications here for sharper predictions."></textarea></label>
+    <div class="row"><button class="btn primary ai" id="prepBtn">Build my prep plan</button><span class="status" id="prepStatus"></span></div>
+  </div>
+  <div id="prepOut" class="stack hidden">
+    <div class="strip"><span class="eyebrow">Likely questions and your best story</span><div id="pQs"></div></div>
+    <div class="grid2">
+      <div class="strip"><span class="eyebrow">Gaps to fill</span><div class="stack" id="pGaps" style="gap:8px"></div></div>
+      <div class="strip"><span class="eyebrow">Your focus fixes</span><ul class="tight" id="pFocus"></ul></div>
+    </div>
+    <div class="strip"><span class="eyebrow">Smart questions to ask them</span><ul class="tight" id="pAsk"></ul></div>
+  </div>
+  <div class="strip">
+    <span class="eyebrow">Day before checklist</span>
+    <ul class="tight">
+      <li>Read each story once out loud with a timer. Target 90 to 120 seconds.</li>
+      <li>Memorize the result numbers for every story. Those are what interviewers write down.</li>
+      <li>Pick your two strongest stories as backups for any question you did not expect.</li>
+      <li>Expect a recorded video round with 4 to 6 behavioral questions. Practice speaking to a camera.</li>
+      <li>Prepare one failure story with a clear lesson. It is almost always asked.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- MOCK -->
+<section id="view-mock" class="stack hidden">
+  <div class="strip" id="mockSetup">
+    <span class="eyebrow">Mock interview</span>
+    <h2>Practice with a hiring manager who probes</h2>
+    <p class="lede">The interviewer asks behavioral questions one at a time and may ask a follow up, just like a real panel. Type your answers as you would say them. When it ends, you get a scorecard and your coach updates what it knows about your habits.</p>
+    <div class="grid2">
+      <label class="f" for="mockRole">Role<input id="mockRole" value="Senior Coordinator, Airport Operations Station Support"></label>
+      <label class="f" for="mockN">Questions<select id="mockN"><option value="3">3 questions (about 15 min)</option><option value="5" selected>5 questions (about 25 min)</option></select></label>
+      <label class="f" for="mockStyle">Interviewer style<select id="mockStyle"><option value="friendly and conversational">Friendly</option><option value="direct and demanding, presses for specifics and numbers">Tough</option></select></label>
+    </div>
+    <div class="row"><button class="btn primary ai" id="mockStart">Start interview</button><span class="status" id="mockStatus"></span></div>
+  </div>
+  <div class="strip hidden" id="mockRoom">
+    <div class="row" style="justify-content:space-between"><span class="eyebrow" id="mockProg">Interview in progress</span><button class="btn ghost" id="mockEnd">End and score now</button></div>
+    <div class="chat" id="chat" aria-live="polite"></div>
+    <label class="f" for="mockAns">Your answer
+      <textarea id="mockAns" rows="6" placeholder="Answer using STAR. Situation and task briefly, then what you did, then the result with numbers."></textarea>
+    </label>
+    <div class="row" style="justify-content:space-between">
+      <span class="wc" id="wc">0 words · target 200 to 300</span>
+      <button class="btn primary" id="mockSend">Send answer</button>
+    </div>
+  </div>
+  <div id="mockScore" class="stack hidden">
+    <div class="strip">
+      <div class="scorebox"><div><span class="eyebrow">Interview score</span><div class="score" id="mScore">0</div></div><p id="mSummary" style="flex:1;min-width:200px"></p></div>
+      <div id="mQs"></div>
+      <div class="tip" id="mDrill"></div>
+      <div class="row"><button class="btn primary" id="mockAgain">Run another interview</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- BANK -->
+<section id="view-bank" class="stack hidden">
+  <div class="strip">
+    <span class="eyebrow">What your coach has learned</span>
+    <h2>Your habits and progress</h2>
+    <p class="lede" id="learnLede">Every story you build and every mock interview teaches the coach your patterns. It uses them to tailor feedback and to pick which questions to drill.</p>
+    <div id="trend"></div>
+    <div id="patterns"></div>
+  </div>
+  <div class="strip">
+    <div class="row" style="justify-content:space-between"><div><span class="eyebrow">Story bank</span><h2 style="margin:0">My Stories</h2></div><button class="btn primary" id="newStory">New story</button></div>
+    <div class="stack" id="bankList" style="gap:12px"></div>
+  </div>
+</section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+function h(tag, attrs = {}, ...kids){
+  const el = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs)){
+    if (k === 'class') el.className = v; else if (k === 'text') el.textContent = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v); else el.setAttribute(k, v);
+  }
+  for (const c of kids.flat()) if (c != null) el.append(c);
+  return el;
+}
+const PATTERNS = {
+  uses_we:{label:'Says "we" where "I" would show ownership', bad:true},
+  no_numbers:{label:'Results missing numbers', bad:true},
+  vague_result:{label:'Result is vague or unclear', bad:true},
+  long_situation:{label:'Too much time on background', bad:true},
+  thin_action:{label:'Action section too thin', bad:true},
+  missing_lesson:{label:'No lesson learned', bad:true},
+  no_reasoning:{label:'Says what, not why', bad:true},
+  rambling:{label:'Answer runs long or wanders', bad:true},
+  strong_metrics:{label:'Uses strong metrics', bad:false},
+  clear_ownership:{label:'Clear personal ownership', bad:false},
+  strong_lesson:{label:'Thoughtful lessons learned', bad:false},
+  concise:{label:'Concise and well paced', bad:false}
+};
+const CODES = Object.keys(PATTERNS).join(', ');
+
+// ---------- Storage (private per person, falls back to this browser) ----------
+const store = {
+  db:null, uid:null, local:false, stories:[], profile:{patterns:{}, sessions:[]},
+  async init(){
+    try{
+      const [db, user] = await Promise.all([claude.use('db'), claude.use('user')]);
+      const uid = user ? await user.id() : null;
+      if (db && uid){ this.db = db; this.uid = uid; }
+    }catch(e){}
+    if (!this.db) this.local = true;
+    await this.load();
+  },
+  profRef(){ return this.db.doc('data/users/' + this.uid + '/profile'); },
+  storyCol(){ return this.profRef().collection('stories'); },
+  async load(){
+    if (this.local){
+      try{ this.stories = JSON.parse(localStorage.getItem('star_stories') || '[]'); this.profile = JSON.parse(localStorage.getItem('star_profile') || 'null') || this.profile; }catch(e){}
+      return;
+    }
+    try{
+      const p = await this.profRef().get(); if (p.exists) this.profile = structuredClone(p.data());
+      const q = await this.storyCol().get(); this.stories = q.docs.map(d => structuredClone(d.data()));
+    }catch(e){ this.local = true; await this.load(); }
+    this.profile.patterns ||= {}; this.profile.sessions ||= [];
+  },
+  persistLocal(){ try{ localStorage.setItem('star_stories', JSON.stringify(this.stories)); localStorage.setItem('star_profile', JSON.stringify(this.profile)); }catch(e){} },
+  async saveStory(s){
+    const i = this.stories.findIndex(x => x.id === s.id); if (i >= 0) this.stories[i] = s; else this.stories.push(s);
+    if (this.local) return this.persistLocal();
+    await this.storyCol().doc(s.id).set(s);
+  },
+  async deleteStory(id){
+    this.stories = this.stories.filter(x => x.id !== id);
+    if (this.local) return this.persistLocal();
+    await this.storyCol().doc(id).delete();
+  },
+  async learn(codes, type, score){
+    for (const c of (codes || [])) if (PATTERNS[c]) this.profile.patterns[c] = (this.profile.patterns[c] || 0) + 1;
+    if (typeof score === 'number') { this.profile.sessions.push({t:Date.now(), type, score}); this.profile.sessions = this.profile.sessions.slice(-40); }
+    if (this.local) return this.persistLocal();
+    try{ await this.profRef().set(this.profile); }catch(e){}
+  }
+};
+function coachMemory(){
+  const p = Object.entries(store.profile.patterns || {}).sort((a,b) => b[1]-a[1]).slice(0,6);
+  if (!p.length) return 'No history yet. This is a new candidate.';
+  return 'Habits seen in past sessions (count): ' + p.map(([c,n]) => PATTERNS[c].label + ' (' + n + ')').join('; ') + '. Weight your coaching toward the recurring weak habits and reinforce the strong ones.';
+}
+const CONTEXT = 'The candidate works in airline airport operations (ground operations, workforce scheduling, station support) at a major US airline and holds an MIS background. Typical metrics in this world: D0 on time departure %, A14 arrival %, turn time, delay minutes and delay codes, staffing coverage %, call outs, overtime hours or cost, mishandled bags per 1,000 customers, customer satisfaction scores, misconnects.';
+
+// ---------- AI ----------
+let sample = null;
+async function initAI(){
+  try{ sample = await claude.use('sample'); }catch(e){ sample = null; }
+  if (!sample) disableAI();
+}
+function disableAI(){ $('#aiNotice').classList.remove('hidden'); document.querySelectorAll('.ai').forEach(b => b.disabled = true); }
+function errText(e){
+  const c = e && e.code;
+  if (c === 'not_granted' || c === 'sampling_disabled' || c === 'not_declared'){ disableAI(); return 'Claude access was not allowed for this page.'; }
+  if (c === 'rate_limited') return 'Too many requests right now. Wait a minute and try again.';
+  if (c === 'invalid_json') return 'The coach replied in an unexpected format. Try again.';
+  if (c === 'refused') return 'The coach could not work with that text. Try rewording it.';
+  return 'Something went wrong reaching the coach. Try again.';
+}
+async function ask(prompt){ return sample.json(prompt, {modelTier:'default', cache:false}); }
+
+// ---------- Tabs ----------
+const views = ['train','prep','mock','bank'];
+function show(v){
+  views.forEach(x => { $('#view-' + x).classList.toggle('hidden', x !== v); $('#tab-' + x).setAttribute('aria-selected', String(x === v)); });
+  if (v === 'bank') renderBank();
+  try{ history.replaceState(null, '', '#' + v); }catch(e){ location.hash = v; }
+  window.scrollTo({top:0});
+}
+document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.view)));
+
+// ---------- Training ----------
+let current = null; // story being edited
+const PARTS = [['situation','Situation'],['task','Task'],['action','Action'],['result','Result'],['lessons','Lessons']];
+const EXAMPLE = "Last winter we had a snowstorm come through overnight and when I got in at 4am about a third of the ramp agents for the early bank had called out. I was the coordinator on shift. I pulled the attendance and the flight schedule, figured out which departures had the tightest turns, and called in two part timers and moved some people from the 8am shift earlier. I also talked to the ramp lead and we agreed to put our most experienced people on the international flights first because those have the biggest misconnect risk. We still had some delays but the early bank mostly went out ok and nobody misconnected on the international flights. After that I started keeping a standby call list for storm days.";
+$('#exampleBtn').onclick = () => { $('#trainRaw').value = EXAMPLE; $('#trainQ').value = 'Tell me about a time you were short staffed and had to keep the operation running.'; };
+
+const STAR_SCHEMA = '{"title":"short story title, max 6 words","competencies":["2 to 4 competencies like Leadership, Problem solving, Data driven decisions, Conflict resolution, Adaptability, Customer focus"],"star":{"situation":"","task":"","action":"","result":"","lessons":""},"scores":{"situation":1,"task":1,"action":1,"result":1,"lessons":1,"overall":0},"feedback":[{"part":"situation|task|action|result|lessons|delivery","tip":"one specific, actionable coaching tip"}],"metrics":[{"placeholder":"[X%]","question":"plain question asking the candidate for this number","why":"why this number strengthens the answer"}],"followups":["recall question that would surface a stronger detail"],"bestQuestions":["other behavioral questions this story can answer"],"patterns":["codes"]}';
+
+function starRules(){
+  return 'Rules: Write in first person and spoken style, as the candidate would say it out loud. Use "I" for the candidate\'s own actions. Never invent facts, names or numbers that are not in the story. Wherever a number would strengthen the answer and the story lacks one, insert a bracketed placeholder such as [X flights] or [from X% to Y%] in the text and list it in metrics (2 to 5 metrics). Situation and task stay brief (1 to 2 sentences each). Action is the longest part, with steps and the reasoning behind them. Result states outcomes. Lessons: 1 to 2 sentences on what was learned and what the candidate does differently now; base it on the story, and if the story offers no lesson, propose a plausible one phrased as a draft the candidate should confirm. The whole answer should be 200 to 300 words. Do not use dash characters (hyphens, en dashes or em dashes) in any text; use commas or periods instead. Scores: each part 1 to 5, overall 0 to 100 for how strong the STAR answer would be in a real interview. Give 3 to 5 feedback tips, 3 followups, 3 bestQuestions. patterns: choose only from these codes describing habits visible in the ORIGINAL raw story: ' + CODES + '.';
+}
+
+async function buildStar(){
+  const raw = $('#trainRaw').value.trim();
+  if (raw.length < 40){ $('#buildStatus').textContent = 'Add a bit more detail to your story first.'; return; }
+  const btn = $('#buildBtn'); btn.disabled = true; $('#buildStatus').textContent = 'Coach is reading your story...';
+  const q = $('#trainQ').value;
+  const prompt = 'You are an expert behavioral interview coach. ' + CONTEXT + '\n\n' + coachMemory() + '\n\nConvert the candidate\'s raw story into a STAR answer with a Lessons section.' + (q ? ' Target question: "' + q + '".' : '') + '\n\n' + starRules() + '\n\nReply with only JSON in this shape:\n' + STAR_SCHEMA + '\n\nRaw story:\n"""' + raw.slice(0, 6000) + '"""';
+  try{
+    const r = await ask(prompt);
+    current = { id: current && current.raw === raw ? current.id : 's' + Date.now().toString(36), raw, question:q, createdAt: Date.now(), ...normalize(r), answers:{} };
+    renderResult();
+    await store.learn(r.patterns, 'story', current.scores.overall);
+    $('#buildStatus').textContent = '';
+    $('#result').scrollIntoView({behavior:'smooth', block:'start'});
+  }catch(e){ $('#buildStatus').textContent = errText(e); }
+  finally{ if (sample) btn.disabled = false; }
+}
+function normalize(r){
+  const s = r.star || {};
+  return {
+    title: String(r.title || 'Untitled story'),
+    competencies: Array.isArray(r.competencies) ? r.competencies.map(String).slice(0,4) : [],
+    star: Object.fromEntries(PARTS.map(([k]) => [k, String(s[k] || '')])),
+    scores: Object.assign({situation:0,task:0,action:0,result:0,lessons:0,overall:0}, r.scores || {}),
+    feedback: Array.isArray(r.feedback) ? r.feedback : [],
+    metrics: Array.isArray(r.metrics) ? r.metrics : [],
+    followups: Array.isArray(r.followups) ? r.followups.map(String) : [],
+    bestQuestions: Array.isArray(r.bestQuestions) ? r.bestQuestions.map(String) : []
+  };
+}
+function dots(n){ const d = h('span',{class:'dots','aria-label':n + ' of 5'}); for (let i=1;i<=5;i++) d.append(h('i',{class: i<=n ? 'on' : ''})); return d; }
+function renderResult(){
+  const c = current; $('#result').classList.remove('hidden');
+  $('#rScore').textContent = Math.round(Number(c.scores.overall) || 0);
+  $('#rTitle').value = c.title;
+  $('#rComps').replaceChildren(...c.competencies.map(x => h('span',{class:'chip',text:x})));
+  $('#rParts').replaceChildren(...PARTS.map(([k,lab]) => {
+    const ta = h('textarea',{id:'p_' + k, rows:k === 'action' ? 6 : 3}); ta.value = c.star[k];
+    ta.addEventListener('input', () => { c.star[k] = ta.value; });
+    return h('div',{class:'part'}, h('div',{class:'lab'}, lab, h('span',{class:'sc'}, dots(Number(c.scores[k]) || 0))), ta);
+  }));
+  $('#rTips').replaceChildren(...c.feedback.map(f => h('div',{class:'tip'}, h('b',{text:(f.part || 'tip') + ': '}), String(f.tip || ''))));
+  $('#metricsStrip').classList.toggle('hidden', !c.metrics.length);
+  $('#rMetrics').replaceChildren(...c.metrics.map((m,i) => {
+    const inp = h('input',{id:'m_' + i, placeholder:'Your number or estimate'}); inp.value = (c.answers || {})[i] || '';
+    inp.addEventListener('input', () => { c.answers[i] = inp.value; });
+    return h('div',{class:'metric'}, h('span',{class:'ph',text:String(m.placeholder || '')}), h('b',{text:String(m.question || '')}), h('span',{class:'status',text:String(m.why || '')}), inp);
+  }));
+  $('#rFollow').replaceChildren(...c.followups.map(x => h('li',{text:x})));
+  $('#rAlso').replaceChildren(...c.bestQuestions.map(x => h('li',{text:x})));
+  $('#saveStatus').textContent = '';
+}
+$('#rTitle').addEventListener('input', e => { if (current) current.title = e.target.value; });
+
+async function rewrite(withNumbers){
+  if (!current) return;
+  const status = withNumbers ? $('#numStatus') : $('#saveStatus');
+  const btn = withNumbers ? $('#numbersBtn') : $('#rescoreBtn');
+  const filled = current.metrics.map((m,i) => ({placeholder:m.placeholder, question:m.question, answer:(current.answers[i] || '').trim()}));
+  if (withNumbers && !filled.some(f => f.answer)){ status.textContent = 'Fill in at least one number first.'; return; }
+  btn.disabled = true; status.textContent = withNumbers ? 'Working your numbers in...' : 'Rescoring...';
+  const prompt = 'You are an expert behavioral interview coach. ' + CONTEXT + '\n\n' + coachMemory() + '\n\n' + (withNumbers ? 'Rewrite this STAR answer, replacing placeholders with the numbers the candidate supplied. For any placeholder left blank, keep the placeholder. Tighten wording where the numbers make sentences stronger. ' : 'The candidate edited this STAR answer. Keep their wording unless a change is clearly needed, then rescore it and refresh the feedback and metrics. ') + starRules() + '\n\nReply with only JSON in this shape:\n' + STAR_SCHEMA + '\n\nCurrent STAR answer:\n' + JSON.stringify(current.star) + (withNumbers ? '\n\nNumbers supplied:\n' + JSON.stringify(filled.filter(f => f.answer)) : '') + '\n\nOriginal raw story for reference:\n"""' + current.raw.slice(0,4000) + '"""';
+  try{
+    const r = await ask(prompt);
+    const keepId = current.id, keepRaw = current.raw, keepQ = current.question, keepCreated = current.createdAt;
+    current = { id:keepId, raw:keepRaw, question:keepQ, createdAt:keepCreated, ...normalize(r), answers:{} };
+    renderResult(); status.textContent = 'Updated. Review and save.';
+    await store.learn([], 'story', current.scores.overall);
+  }catch(e){ status.textContent = errText(e); }
+  finally{ if (sample) btn.disabled = false; }
+}
+$('#numbersBtn').onclick = () => rewrite(true);
+$('#rescoreBtn').onclick = () => rewrite(false);
+$('#buildBtn').onclick = buildStar;
+$('#saveBtn').onclick = async () => {
+  if (!current) return;
+  current.updatedAt = Date.now();
+  const copy = JSON.parse(JSON.stringify(current));
+  try{ await store.saveStory(copy); $('#saveStatus').textContent = 'Saved to My Stories.'; }
+  catch(e){ $('#saveStatus').textContent = 'Could not save. ' + (e && e.code === 'quota_exceeded' ? 'Your story bank is full.' : 'Try again.'); }
+};
+
+// ---------- Prep ----------
+function bankSummary(){
+  return store.stories.map(s => ({id:s.id, title:s.title, competencies:s.competencies, score:s.scores && s.scores.overall, result:(s.star && s.star.result || '').slice(0,240)}));
+}
+$('#prepBtn').onclick = async () => {
+  const btn = $('#prepBtn'); btn.disabled = true; $('#prepStatus').textContent = 'Building your plan...';
+  const prompt = 'You are an expert interview coach preparing a candidate for a behavioral interview. ' + CONTEXT + '\n\nRole: ' + $('#prepRole').value + ' (' + $('#prepLevel').value + ' level).\nJob notes: ' + ($('#prepJD').value.trim().slice(0,4000) || 'none provided') + '\n\n' + coachMemory() + '\n\nCandidate story bank (JSON): ' + JSON.stringify(bankSummary()) + '\n\nPredict 8 likely behavioral questions for this role and level. For each, pick the best story id from the bank (or null if none fits) and say in one sentence how to angle that story for this question. List competency gaps with no good story, and for each suggest the kind of real experience from airport operations work the candidate should mine for a story. Give 3 focus fixes based on the habits above (or general best practice if no history). Give 4 thoughtful questions the candidate can ask the interviewer. Do not use dash characters in any text.\n\nReply with only JSON: {"questions":[{"q":"","competency":"","storyId":null,"angle":""}],"gaps":[{"competency":"","idea":""}],"focus":[""],"askThem":[""]}';
+  try{
+    const r = await ask(prompt);
+    const byId = Object.fromEntries(store.stories.map(s => [s.id, s]));
+    $('#pQs').replaceChildren(...(r.questions || []).map(x => {
+      const s = byId[x.storyId];
+      return h('div',{class:'qmap'}, h('span',{class:'q',text:String(x.q || '')}),
+        h('div',{class:'chips'}, h('span',{class:'chip',text:String(x.competency || '')}), s ? h('span',{class:'chip amber',text:'Use: ' + s.title}) : h('span',{class:'pill lo',text:'No story yet'})),
+        h('span',{class:'m',text:String(x.angle || '')}));
+    }));
+    $('#pGaps').replaceChildren(...((r.gaps || []).length ? r.gaps.map(g => h('div',{class:'tip'}, h('b',{text:String(g.competency || '') + ': '}), String(g.idea || ''))) : [h('p',{class:'status',text:'No major gaps. Keep sharpening your numbers.'})]));
+    $('#pFocus').replaceChildren(...(r.focus || []).map(x => h('li',{text:String(x)})));
+    $('#pAsk').replaceChildren(...(r.askThem || []).map(x => h('li',{text:String(x)})));
+    $('#prepOut').classList.remove('hidden'); $('#prepStatus').textContent = store.stories.length ? '' : 'Tip: save a few stories in Training so the coach can match them.';
+  }catch(e){ $('#prepStatus').textContent = errText(e); }
+  finally{ if (sample) btn.disabled = false; }
+};
+
+// ---------- Mock interview ----------
+const END = 'That concludes our interview.';
+let turns = [], mockCfg = null, ctl = null;
+function addMsg(who, text){
+  const m = h('div',{class:'msg ' + (who === 'ai' ? 'ai' : 'me')}); m.textContent = text;
+  const wrap = h('div',{style:'display:flex;flex-direction:column;gap:2px;' + (who === 'ai' ? '' : 'align-items:flex-end')}, h('span',{class:'who',text: who === 'ai' ? 'Interviewer' : 'You'}), m);
+  $('#chat').append(wrap); $('#chat').scrollTop = $('#chat').scrollHeight; return m;
+}
+function mockRules(){
+  return 'You are a hiring manager at a major US airline conducting a behavioral interview for: ' + mockCfg.role + '. Your style is ' + mockCfg.style + '. ' + CONTEXT + '\n\n' + coachMemory() + ' As the interviewer, choose questions that test the candidate where their habits are weakest.\n\nCandidate story bank titles (do not mention them, just use them to vary topics): ' + store.stories.map(s => s.title).join('; ') + '\n\nRules: Open with a one sentence greeting and your first question. Ask exactly ' + mockCfg.n + ' main behavioral questions, one at a time, mixing operations disruptions, staffing, data driven decisions, conflict, leadership and a failure question. After each answer you may ask at most ONE short follow up probe (for example asking for a number, their specific role, or what they would do differently) before moving to the next main question. Number main questions like "Question 2 of ' + mockCfg.n + '." Never give feedback or scores during the interview. Keep every message under 70 words. After the candidate answers the final question and any probe, reply with a short thank you that ends with exactly: "' + END + '" Do not use dash characters.';
+}
+async function interviewerTurn(){
+  const bubble = addMsg('ai', 'Thinking...');
+  $('#mockSend').disabled = true; ctl = new AbortController();
+  try{
+    const {text} = await sample([{role:'user', content: mockRules() + '\n\nBegin the interview now.'}, ...turns], {cache:false, signal:ctl.signal, onText:({text}) => { bubble.textContent = text; $('#chat').scrollTop = $('#chat').scrollHeight; }});
+    turns.push({role:'assistant', content:text});
+    const asked = turns.filter(t => t.role === 'assistant').map(t => t.content).join(' ');
+    const m = asked.match(/Question (\d+) of/g); $('#mockProg').textContent = m ? m[m.length-1].replace(' of','') + ' of ' + mockCfg.n : 'Interview in progress';
+    if (text.includes(END)) await scoreMock();
+  }catch(e){
+    bubble.textContent = e.text || '';
+    if (e.code !== 'cancelled') addMsg('ai', errText(e) + ' Send your answer again to retry.');
+  }finally{ if (sample) $('#mockSend').disabled = false; }
+}
+$('#mockStart').onclick = async () => {
+  mockCfg = {role:$('#mockRole').value, n:Number($('#mockN').value), style:$('#mockStyle').value};
+  turns = []; $('#chat').replaceChildren(); $('#mockSetup').classList.add('hidden'); $('#mockScore').classList.add('hidden'); $('#mockRoom').classList.remove('hidden');
+  turns.push({role:'user', content:'(The candidate has joined the call.)'});
+  await interviewerTurn();
+};
+$('#mockAns').addEventListener('input', () => {
+  const n = ($('#mockAns').value.trim().match(/\S+/g) || []).length; const el = $('#wc');
+  el.textContent = n + ' words · target 200 to 300'; el.className = 'wc' + (n >= 200 && n <= 300 ? ' ok' : n > 300 ? ' long' : '');
+});
+$('#mockSend').onclick = async () => {
+  const a = $('#mockAns').value.trim(); if (!a) return;
+  const last = turns[turns.length-1];
+  if (!(last && last.role === 'user' && last.content === a)){ addMsg('me', a); turns.push({role:'user', content:a}); }
+  $('#mockAns').value = ''; $('#mockAns').dispatchEvent(new Event('input'));
+  await interviewerTurn();
+};
+$('#mockEnd').onclick = () => { if (ctl) ctl.abort(); scoreMock(); };
+async function scoreMock(){
+  const answered = turns.filter(t => t.role === 'user').length - 1;
+  $('#mockRoom').classList.add('hidden'); $('#mockScore').classList.remove('hidden');
+  $('#mScore').textContent = '...'; $('#mSummary').textContent = 'Scoring your interview...'; $('#mQs').replaceChildren(); $('#mDrill').textContent = '';
+  if (answered < 1){ $('#mScore').textContent = '0'; $('#mSummary').textContent = 'No answers to score yet. Start another interview when you are ready.'; return; }
+  const transcript = turns.slice(1).map(t => (t.role === 'assistant' ? 'Interviewer: ' : 'Candidate: ') + t.content).join('\n\n');
+  const prompt = 'You are an expert behavioral interview coach. ' + CONTEXT + '\n\n' + coachMemory() + '\n\nScore this mock interview for the role ' + mockCfg.role + '. For each main question asked, score the candidate\'s answer 1 to 5, mark which STAR parts were present, name one strength and one specific fix. Then give an overall score 0 to 100, a 2 sentence summary, one drill to practice next, and pattern codes observed across the answers chosen only from: ' + CODES + '. Do not use dash characters in any text.\n\nReply with only JSON: {"overall":0,"summary":"","nextDrill":"","patterns":["code"],"questions":[{"q":"","score":1,"parts":{"situation":true,"task":true,"action":true,"result":true,"lessons":false},"strength":"","fix":""}]}\n\nTranscript:\n' + transcript.slice(0, 30000);
+  try{
+    const r = await ask(prompt);
+    $('#mScore').textContent = Math.round(Number(r.overall) || 0); $('#mSummary').textContent = String(r.summary || '');
+    $('#mQs').replaceChildren(...(r.questions || []).map(q => {
+      const parts = q.parts || {};
+      return h('div',{class:'qmap'}, h('div',{class:'row',style:'justify-content:space-between'}, h('span',{class:'q',text:String(q.q || '')}), dots(Number(q.score) || 0)),
+        h('div',{class:'chips'}, ...PARTS.map(([k,lab]) => h('span',{class:'pill ' + (parts[k] ? 'hi' : 'lo'), text:(parts[k] ? '✓ ' : '✗ ') + lab}))),
+        h('span',{class:'m'}, h('b',{text:'Strength: '}), String(q.strength || '')), h('span',{class:'m'}, h('b',{text:'Fix: '}), String(q.fix || '')));
+    }));
+    $('#mDrill').replaceChildren(h('b',{text:'Next drill: '}), String(r.nextDrill || ''));
+    await store.learn(r.patterns, 'mock', Number(r.overall) || 0);
+  }catch(e){ $('#mScore').textContent = 'n/a'; $('#mSummary').textContent = errText(e); }
+}
+$('#mockAgain').onclick = () => { $('#mockScore').classList.add('hidden'); $('#mockSetup').classList.remove('hidden'); };
+
+// ---------- Bank & learning ----------
+function pillFor(n){ n = Math.round(Number(n) || 0); return h('span',{class:'pill ' + (n >= 80 ? 'hi' : n >= 60 ? 'mid' : 'lo'), text:n + '/100'}); }
+function renderBank(){
+  const list = $('#bankList');
+  if (!store.stories.length){
+    list.replaceChildren(h('div',{class:'empty'}, h('b',{text:'No stories saved yet.'}), h('p',{text:'Build one in Training and press Save to My Stories. Aim for 8 to 10 covering leadership, conflict, failure, initiative, teamwork, pressure and adaptability.'})));
+  } else {
+    const sorted = [...store.stories].sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    list.replaceChildren(...sorted.map(s => {
+      const confirmRow = h('div',{class:'row hidden'}, h('span',{class:'status',text:'Delete this story for good?'}),
+        h('button',{class:'btn danger', onclick: async () => { try{ await store.deleteStory(s.id); renderBank(); }catch(e){} }}, 'Delete'),
+        h('button',{class:'btn ghost', onclick: () => confirmRow.classList.add('hidden')}, 'Keep'));
+      return h('div',{class:'story'},
+        h('div',{class:'hd'}, h('h3',{text:s.title}), pillFor(s.scores && s.scores.overall)),
+        h('div',{class:'chips'}, ...(s.competencies || []).map(c => h('span',{class:'chip',text:c}))),
+        h('p',{class:'status',text:(s.star && s.star.result || '').slice(0,180)}),
+        h('div',{class:'row'},
+          h('button',{class:'btn', onclick: () => { current = JSON.parse(JSON.stringify(s)); current.answers = {}; $('#trainRaw').value = s.raw || ''; $('#trainQ').value = s.question || ''; renderResult(); show('train'); setTimeout(() => $('#result').scrollIntoView({block:'start'}), 50); }}, 'Open and edit'),
+          h('button',{class:'btn ghost', onclick: () => confirmRow.classList.remove('hidden')}, 'Delete')),
+        confirmRow);
+    }));
+  }
+  // patterns
+  const pats = Object.entries(store.profile.patterns || {}).sort((a,b) => b[1]-a[1]);
+  $('#patterns').replaceChildren(...(pats.length ? pats.map(([c,n]) => h('div',{class:'pattern'}, h('span',{}, h('span',{class:'pill ' + (PATTERNS[c].bad ? 'mid' : 'hi'), text: PATTERNS[c].bad ? 'Work on' : 'Strength'}), ' ', PATTERNS[c].label), h('span',{class:'wc',text:'seen ' + n + '×'}))) : [h('p',{class:'status',text:'Nothing learned yet. Build a story or run a mock interview.'})]));
+  // trend
+  const ses = (store.profile.sessions || []).filter(s => typeof s.score === 'number');
+  if (ses.length >= 2){
+    const W = 600, H = 60, pad = 6, xs = (W - 2*pad) / (ses.length - 1);
+    const pts = ses.map((s,i) => [pad + i*xs, H - pad - (Math.max(0,Math.min(100,s.score))/100)*(H - 2*pad)]);
+    const d = pts.map((p,i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+    const last = pts[pts.length-1];
+    $('#trend').innerHTML = '<span class="eyebrow">Score trend · last ' + ses.length + ' sessions · latest ' + Math.round(ses[ses.length-1].score) + '/100</span><svg class="spark" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="Score trend"><line x1="0" x2="' + W + '" y1="' + (H - pad - 0.8*(H-2*pad)) + '" y2="' + (H - pad - 0.8*(H-2*pad)) + '" stroke="var(--line)" stroke-dasharray="4 4"/><path d="' + d + '" fill="none" stroke="var(--accent)" stroke-width="2" vector-effect="non-scaling-stroke"/><circle cx="' + last[0] + '" cy="' + last[1] + '" r="4" fill="var(--accent)"/></svg><span class="status">Dashed line marks 80, interview ready.</span>';
+  } else $('#trend').replaceChildren();
+  $('#learnLede').textContent = store.local
+    ? 'Your stories and progress are saved in this browser only. Open the page in the Claude app while signed in to keep them across devices.'
+    : 'Every story you build and every mock interview teaches the coach your patterns. Your stories are private to you and follow you across devices.';
+}
+$('#newStory').onclick = () => { current = null; $('#trainRaw').value = ''; $('#trainQ').value = ''; $('#result').classList.add('hidden'); show('train'); $('#trainRaw').focus(); };
+
+// ---------- Boot ----------
+(async () => {
+  const start = (location.hash || '').slice(1);
+  if (views.includes(start)) show(start);
+  await Promise.all([initAI(), store.init()]);
+  if (!$('#view-bank').classList.contains('hidden')) renderBank();
+})();
+</script>
+
+</body>
+</html>
